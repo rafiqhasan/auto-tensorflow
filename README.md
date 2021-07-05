@@ -1,2 +1,2 @@
-# tensorflow_auto
-TFAuto library
+# auto-tensorflow
+Library to create Automated ML models on Tensorflow
