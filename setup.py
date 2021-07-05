@@ -26,7 +26,7 @@ setuptools.setup(
     license='Apache License 2.0',
     url="https://github.com/rafiqhasan/tensorflow_auto",
     packages = [
-        "tfa"
+        "tensorflow_auto"
     ],
     include_package_data=True,
     install_requires=[
