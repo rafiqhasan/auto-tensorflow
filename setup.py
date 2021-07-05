@@ -18,7 +18,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="tensorflow_auto",
-    version="0.0.50",
+    version="1.0.0",
     author="Hasan Rafiq",
     description="Build automated ML models using Tensorflow",
     long_description=long_description,
@@ -31,7 +31,7 @@ setuptools.setup(
     include_package_data=True,
     install_requires=[
         "keras-tuner==1.0.1",
-        "tensorflow==0.25.0",
+        "tensorflow==2.5.0",
         "tensorflow_hub==0.12.0",
         "tfx==0.29.0"
         "witwidget==1.8.0"
