@@ -17,7 +17,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="tensorflow_auto",
+    name="auto-tensorflow",
     version="1.0.0",
     author="Hasan Rafiq",
     description="Build automated ML models using Tensorflow",
@@ -26,7 +26,7 @@ setuptools.setup(
     license='Apache License 2.0',
     url="https://github.com/rafiqhasan/tensorflow_auto",
     packages = [
-        "tensorflow_auto"
+        "auto-tensorflow"
     ],
     include_package_data=True,
     install_requires=[
