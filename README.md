@@ -1,12 +1,14 @@
 ## **Auto-Tensorflow**
 **Build Low Code Automated Tensorflow explainable models in just 3 lines of code.**
 
-<img src="/header.png" width="100%"/>
+<img src="/logo.png" width="100%"/>
 
 ### **Mission:**
 The only mission of this library is to make Deep Learning on Tensorflow easy for the masses with low code approach and also increase trust on ML models through What-IF explanation. 
 
 Built on top of the powerful Tensorflow tools like **TFX** , **TF APIs** and **What-IF Tool** , this library automatically does all the heavy lifting internally. This empowers developers to build deployable Tensorflow Models quickly without any knowledge of ML or complex theoriticals like EDA etc. There is no dependency on Pandas / SKLearn or other libraries which makes the whole pipeline easily scalable on any volume of data.
+
+<img src="/header.png" width="100%"/>
 
 ### **Features:**
 1. Build Classification / Regression models on CSV data
