@@ -1011,7 +1011,7 @@ class TFAuto():
     Initialize TFAuto engine
     train_data_path: Path where Training data is stored
     test_data_path: Path where Test / Eval data is stored
-    path_root: Directory for running TFAuto( Directory should exist, without any files )
+    path_root: Directory for running TFAuto( Directory should NOT exist )
     '''
     ##Define all constants
     self._tfx_root = os.path.join(os.getcwd(), path_root)
