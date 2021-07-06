@@ -18,7 +18,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="auto_tensorflow",
-    version="1.0.0",
+    version="1.0.1",
     author="Hasan Rafiq",
     description="Build automated ML models using Tensorflow",
     long_description=long_description,
