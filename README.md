@@ -2,9 +2,11 @@
 
 ### **Mission:**
 **Build Low Code Automated Tensorflow explainable models in just 3 lines of code.**
+
 We aim to make Deep Learning on Tensorflow absolutely easy for the masses with our low code framework and also increase trust on ML models through What-IF explanation.
 
-Built on top of the powerful Tensorflow tools like **TFX** , **TF APIs** and **What-IF Tool** , this library automatically does all the heavy lifting internally. This empowers developers to build deployable Tensorflow Models quickly without any knowledge of ML or complex theoriticals like EDA etc. There is no dependency on Pandas / SKLearn or other libraries which makes the whole pipeline easily scalable on any volume of data.
+### **Under the hood:**
+Built on top of the powerful **Tensorflow** ecosystem like **TFX** , **TF APIs** and **What-IF Tool** , the library automatically does all the heavy lifting internally like EDA, schema discovery, HPT, model search etc. This empowers developers to focus only on building end user applications quickly without any knowledge of Tensorflow, ML or debugging. There is no dependency on Pandas / SKLearn or other libraries which makes the whole pipeline highly scalable on any volume of data. Moreover the models trained with auto-tensorflow can directly be deployed on any cloud like GCP / AWS / Azure.
 
 <img src="/header.png" width="100%"/>
 
