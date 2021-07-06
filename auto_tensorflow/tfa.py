@@ -1,3 +1,5 @@
+##Owner: Hasan Rafiq
+##URL: https://www.linkedin.com/in/sam04/
 import os
 import tempfile
 import re
@@ -38,8 +40,6 @@ from google.protobuf import text_format
 from google.protobuf.json_format import MessageToDict
 from witwidget.notebook.visualization import WitConfigBuilder
 from witwidget.notebook.visualization import WitWidget
-
-# %load_ext tfx.orchestration.experimental.interactive.notebook_extensions.skip
 
 class TFAutoUtils():
   def __init__(self, data_path, path_root='/tfx'):
@@ -248,19 +248,19 @@ class TFAutoData():
 
     return self.pipeline
 
-# class TextEncoder(tf.keras.Model):
-#   def __init__(self):
-#     super(TextEncoder, self).__init__()
-#     self.encoder = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder/4", trainable=False)
+class TextEncoder(tf.keras.Model):
+  def __init__(self):
+    super(TextEncoder, self).__init__()
+    self.encoder = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder/4", trainable=False)
 
-#   def __call__(self, inp):
-#     #Preprocess text
-#     # encoder_inputs = self.preprocessor(inp)
+  def __call__(self, inp):
+    #Preprocess text
+    # encoder_inputs = self.preprocessor(inp)
 
-#     #Encode text
-#     embedding = self.encoder(inp)
+    #Encode text
+    embedding = self.encoder(inp)
 
-#     return embedding
+    return embedding
 
 class TFAutoModel():
   def __init__(self, _tfx_root, train_data_path, test_data_path):
@@ -500,7 +500,6 @@ class TFAutoModel():
         feats_dict[feats['feature']] = tf.keras.Input(name=feats['feature'], shape=(1,), dtype=tf.float32)
       elif feats['Type'] == 'INT':
         feats_dict[feats['feature']] = tf.keras.Input(name=feats['feature'], shape=(1,), dtype=tf.int32)
-      
 
       for k_ in feats_dict.keys():
         keras_dict_input[k_] = feats_dict[k_]
@@ -555,13 +554,13 @@ class TFAutoModel():
 
       #Handle Text attributes
       feat_text = []
-      # text_emb = TextEncoder()
+      text_emb = TextEncoder()
       for feats in self._config_json['data_schema']:
         if feats['Type'] == 'STRING':
           feat_text.append('')
           
           #Apply Text Encoding from TFHub
-          feat_text[-1] = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder/4", trainable=False)(tf.squeeze(tf.cast(feature_cols['K'][feats['feature']], tf.string)))
+          feat_text[-1] = text_emb(tf.squeeze(tf.cast(feature_cols['K'][feats['feature']], tf.string)))
 
       ###Create MODEL
       ####Concatenate all features( Numerical input )
@@ -672,13 +671,13 @@ class TFAutoModel():
       
       #Handle Text attributes
       feat_text = []
-      # text_emb = TextEncoder()
+      text_emb = TextEncoder()
       for feats in self._config_json['data_schema']:
         if feats['Type'] == 'STRING':
           feat_text.append('')
           
           #Apply Text Encoding from TFHub
-          feat_text[-1] = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder/4", trainable=False)(tf.squeeze(tf.cast(feature_cols['K'][feats['feature']], tf.string)))
+          feat_text[-1] = text_emb(tf.squeeze(tf.cast(feature_cols['K'][feats['feature']], tf.string)))
 
       ###Create MODEL
       ####Concatenate all features( Numerical input )
@@ -1008,6 +1007,12 @@ class TFAutoModel():
 
 class TFAuto():
   def __init__(self, train_data_path, test_data_path, path_root='/tfx'):
+    '''
+    Initialize TFAuto engine
+    train_data_path: Path where Training data is stored
+    test_data_path: Path where Test / Eval data is stored
+    path_root: Directory for running TFAuto( Directory should exist, without any files )
+    '''
     ##Define all constants
     self._tfx_root = os.path.join(os.getcwd(), path_root)
     self._pipeline_root = os.path.join(self._tfx_root, 'pipelines');      # Join ~/tfx/pipelines/
@@ -1050,7 +1055,10 @@ class TFAuto():
       json.dump(config_dict, fp, indent = 4)
 
   def step_data_explore(self, viz=False):
-    # #Run data steps in pipeline
+    '''
+    Method to automatically estimate schema of Data
+    Viz: (False) Is data visualization required ?
+    '''
     self.pipeline = self.tfadata.run_initial(self._data_path, self._tfx_root, self._metadata_db_root, self.tfautils, viz)
     self.generate_config_json()
 
@@ -1060,6 +1068,7 @@ class TFAuto():
     Parameters
     label_column: The feature to be used as Label
     model_type: Either of 'REGRESSION', 'CLASSIFICATION'
+    model_complexity: 0 to 1 (0: Model without HPT, 1: Model with HPT) -> More will be added in future
     '''
     # #Run Modeling steps
     if self.tfadata._run == True:
@@ -1068,9 +1077,11 @@ class TFAuto():
     else:
       print("Error: Please run Step 1 - step_data_explore")
 
+    print("Success: Model Training complete. Exported to {}")
+
   def step_model_whatif(self):
     '''
-    Method to show WIT of model
+    Run What-IF tool for trained model
     '''
     # #Run Modeling steps
     if self.tfadata._run == True:
