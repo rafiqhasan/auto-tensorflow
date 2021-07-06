@@ -1,5 +1,3 @@
-## **Auto-Tensorflow**
-
 <img src="/logo.png" width="100%"/>
 
 ### **Mission:**
