@@ -64,7 +64,7 @@ tfa.step_model_whatif()
 ### **Current limitations:**
 There are a few limitations in the initial release but we are working day and night to resolve these and **add them as future features**.
 1. Doesn't support Image / Audio data
-2. Doesn't support - quote delimited CSVs
+2. Doesn't support - quote delimited CSVs( TFX doesn't support qCSV yet )
 3. Classification only supports integer labels from 0 to N
 
 ### **Future roadmap:**
