@@ -1,7 +1,7 @@
 <img src="/logo.png" width="100%"/>
 
 ### **Mission:**
-**Build Low Code Automated Tensorflow explainable models in just 3 lines of code.**
+**Build Low Code Automated Tensorflow, What-IF explainable models in just 3 lines of code.**
 
 We aim to make Deep Learning on Tensorflow absolutely easy for the masses with our low code framework and also increase trust on ML models through What-IF tool simulation.
 
