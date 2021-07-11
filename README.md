@@ -10,6 +10,8 @@ Built on top of the powerful **Tensorflow** ecosystem like **TFX** , **TF APIs**
 
 <img src="/header.png" width="100%"/>
 
+**Launch**: https://youtu.be/sil-RbuckG0
+
 ### **Features:**
 1. Build Classification / Regression models on CSV data
 2. Automated Schema Inference
