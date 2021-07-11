@@ -271,6 +271,7 @@ class TFAutoModel():
     self._log_root = os.path.join(self._tfx_root, 'logs');
     self._model_root = os.path.join(self._tfx_root, 'model');
     self._label = ''                                                      #Label
+    self._label_vocab = []
     self._features = []                                                   #List of features to be used for modeling
     self._train_data_path = train_data_path                               #Training data
     self._test_data_path = test_data_path                                 #Test data
@@ -374,10 +375,32 @@ class TFAutoModel():
 
       return(features)
 
+    #Convert string labels 0 to N
+    def string_labels_to_num(v_feats, v_label):
+      pass_label = v_label
+      for ix, cat_vals in enumerate(v_feats['categorical_values']):
+        search_string = str(cat_vals) + "$"
+        pass_label = tf.strings.regex_replace(pass_label, search_string, tf.strings.as_string(ix))
+
+      pass_label = tf.strings.to_number(pass_label, out_type=tf.dtypes.int32)
+      return pass_label
+
     #To be called from TF
     def feature_engg(features, label):
       #Add new features
       features = feature_engg_features(features)
+
+      #Replace string label with 0 to N for classification case
+      if self._model_type == 'CLASSIFICATION':
+        for feats in self._config_json['data_schema']:
+          if feats['feature'] == self._label:
+            break
+
+        #Replace categorical values with 0 to N
+        if feats['Type'] == 'CATEGORICAL' and feats['feature'] == self._label:
+          self._label_vocab = feats['categorical_values']
+          label = string_labels_to_num(feats, label)
+
       return(features, label)
 
     def _input_fn(v_test=False):     
@@ -516,8 +539,12 @@ class TFAutoModel():
       for feats in self._config_json['data_schema']:
         #Only include features
         if feats['feature'] == self._label:
-          num_classes = int(feats['max'] + 1)
-          break
+          if feats['Type'] != 'CATEGORICAL':
+            num_classes = int(feats['max'] + 1)
+            break
+          else:
+            num_classes = len(feats['categorical_values'])
+            break
 
       METRICS = [
           # tf.keras.metrics.AUC(multi_label=True, num_labels=num_classes),
@@ -781,6 +808,7 @@ class TFAutoModel():
     #                 batch_size = 10)()
     
     #Train and Evaluate
+    #Best model chosen from tuning is just refitted here on full data
     if mode == 'Train':
       if self._model_type == 'REGRESSION':
         print("Training a regression model...")
@@ -797,6 +825,7 @@ class TFAutoModel():
                                 keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True, verbose=True)]
                       )
     else:
+      #Model is created during Tuning cycle
       if self._model_type == 'REGRESSION':
         print("Hyper-Tuning a regression model...")
         mod_func = self.create_keras_model_regression
@@ -882,21 +911,24 @@ class TFAutoModel():
 
     #Generate examples
     for row in range(max_samples):
-      example = tf.train.Example()
-      #For each column in file
-      for f_ in self._config_json['file_headers']:
-        for feats in self._config_json['data_schema']:
-          if feats['feature'] != f_:
-            continue
+      try:
+        example = tf.train.Example()
+        #For each column in file
+        for f_ in self._config_json['file_headers']:
+          for feats in self._config_json['data_schema']:
+            if feats['feature'] != f_:
+              continue
 
-          #Prepare example data
-          if feats['Type'] in [ 'CATEGORICAL', 'STRING' ]:
-            example.features.feature[f_].bytes_list.value.append(out[f_][row])
-          elif feats['Type'] == 'FLOAT':
-            example.features.feature[f_].float_list.value.append(out[f_][row])
-          elif feats['Type'] == 'INT':
-            example.features.feature[f_].int64_list.value.append(int(out[f_][row]))
-      examples.append(example)
+            #Prepare example data
+            if feats['Type'] in [ 'CATEGORICAL', 'STRING' ]:
+              example.features.feature[f_].bytes_list.value.append(out[f_][row])
+            elif feats['Type'] == 'FLOAT':
+              example.features.feature[f_].float_list.value.append(out[f_][row])
+            elif feats['Type'] == 'INT':
+              example.features.feature[f_].int64_list.value.append(int(out[f_][row]))
+        examples.append(example)
+      except:
+        pass
     return examples
 
   #Create prediction function to link in WIT
@@ -945,12 +977,15 @@ class TFAutoModel():
     examples_wit = self.generate_examples_for_wit()
     if self._model_type == 'REGRESSION':
       wit_type = 'regression'
+      config_builder = (WitConfigBuilder(examples_wit, self._config_json['file_headers'])
+                  .set_custom_predict_fn(self.wit_prediction_fn_dyn)
+                  .set_model_type(wit_type))
     elif self._model_type == 'CLASSIFICATION':
       wit_type = 'classification'
-
-    config_builder = (WitConfigBuilder(examples_wit, self._config_json['file_headers'])
-                      .set_custom_predict_fn(self.wit_prediction_fn_dyn)
-                      .set_model_type(wit_type))
+      config_builder = (WitConfigBuilder(examples_wit, self._config_json['file_headers'])
+                  .set_custom_predict_fn(self.wit_prediction_fn_dyn)
+                  .set_model_type(wit_type)
+                  .set_label_vocab(self._label_vocab))
     
     WitWidget(config_builder)
   
@@ -962,14 +997,9 @@ class TFAutoModel():
       if feats['feature'] != self._label:
         continue
 
-      #Only allow numerical values
-      if feats['Type'] in [ 'CATEGORICAL', 'STRING' ]:
-        print("Error: Label should be numerical only")
-        success_flag = False
-        return success_flag
-      
-      if self._model_type == "CLASSIFICATION" and feats['Type'] != 'INT':
-        print("Error: CLASSIFICATION - Label data type is not correct")
+      # Only allow numerical values for REGRESSION models
+      if feats['Type'] in [ 'CATEGORICAL', 'STRING' ] and self._model_type == "REGRESSION":
+        print("Error: REGRESSION - labels should be numerical only")
         success_flag = False
         return success_flag
 
@@ -978,10 +1008,10 @@ class TFAutoModel():
       if feats['feature'] != self._label:
         continue
 
-      #For classification, minimum value should be 0 and type should be INT
-      if self._model_type == "CLASSIFICATION":
+      #For classification, minimum value should be 0 for INT labels
+      if self._model_type == "CLASSIFICATION" and feats['Type'] in ['INT', 'FLOAT']:
         if int(feats['min']) != 0:
-          print("Error: CLASSIFICATION - Label values are not correct")
+          print("Error: CLASSIFICATION - Integer labels should start from 0")
           success_flag = False
           return success_flag
     
@@ -1077,7 +1107,7 @@ class TFAuto():
     else:
       print("Error: Please run Step 1 - step_data_explore")
 
-    print("Success: Model Training complete. Exported to {}")
+    print("Success: Model Training complete. Exported to: {}".format(self._model_root + "/"))
 
   def step_model_whatif(self):
     '''
