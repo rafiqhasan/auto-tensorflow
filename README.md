@@ -72,5 +72,4 @@ There are a few limitations in the initial release but we are working day and ni
 
 ### **Future roadmap:**
 1. Add support for Timeseries / Audio / Image data
-2. Add support for quoted CSVs
-3. Add feature to download full pipeline model Python code for advanced tweaking
+2. Add feature to download full pipeline model Python code for advanced tweaking
