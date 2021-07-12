@@ -137,6 +137,7 @@ class TFAutoData():
           features_dict[f_]['Type'] = 'CATEGORICAL'
 
       #Min/Max for numerical features
+      #Count of unique values
       for feat in features_stats['datasets'][0]['features']:
         curr_feat = feat['path']['step'][0]
         if curr_feat == features_dict[f_]['feature'] and features_dict[f_]['Type'] in ['INT','FLOAT']:
@@ -144,6 +145,12 @@ class TFAutoData():
           features_dict[f_]['max'] = feat['numStats'].get('max', 0.0)
           features_dict[f_]['mean'] = feat['numStats'].get('mean', 0.0)
           features_dict[f_]['std_dev'] = feat['numStats'].get('stdDev', 1)
+        elif curr_feat == features_dict[f_]['feature'] and features_dict[f_]['Type'] == 'CATEGORICAL':
+          features_dict[f_]['categorical_values_count'] = {}
+          features_dict[f_]['categorical_values_count_total'] = 0
+          for topvals in feat['stringStats']['topValues']:            
+            features_dict[f_]['categorical_values_count'][topvals.get('value', "NA")] = topvals.get('frequency', 0)
+            features_dict[f_]['categorical_values_count_total'] += topvals.get('frequency', 0)
       
       features_list.append(features_dict[f_])
     self.features_list = features_list
@@ -273,6 +280,7 @@ class TFAutoModel():
     self._label = ''                                                      #Label
     self._label_vocab = []
     self._features = []                                                   #List of features to be used for modeling
+    self._class_weights = {}                                              #Class weights
     self._train_data_path = train_data_path                               #Training data
     self._test_data_path = test_data_path                                 #Test data
     self._model_type = ''
@@ -537,7 +545,7 @@ class TFAutoModel():
 
       #Number of classes
       for feats in self._config_json['data_schema']:
-        #Only include features
+        #Only include label
         if feats['feature'] == self._label:
           if feats['Type'] != 'CATEGORICAL':
             num_classes = int(feats['max'] + 1)
@@ -545,6 +553,19 @@ class TFAutoModel():
           else:
             num_classes = len(feats['categorical_values'])
             break
+
+      #Calculate class weights
+      for feats in self._config_json['data_schema']:
+        #Only include label
+        if feats['feature'] == self._label:
+          if feats.get('categorical_values', 'NA') != 'NA':
+            #In case of categorical labels
+            for ix, class_ in enumerate(feats['categorical_values']):
+              self._class_weights[ix] = (1 / feats['categorical_values_count'][class_]) * (feats['categorical_values_count_total'])/2.0
+          else:
+            #In case of numerical labels
+            for class_ in range(num_classes):
+              self._class_weights[class_] = 1
 
       METRICS = [
           # tf.keras.metrics.AUC(multi_label=True, num_labels=num_classes),
@@ -822,7 +843,8 @@ class TFAutoModel():
                       # validation_steps = 3,   ###Keep this none for running evaluation on full EVAL data every epoch
                       steps_per_epoch = 100,   ###Has to be passed - Cant help it :) [ Number of batches per epoch ]
                       callbacks=[reduce_lr, #modelsave_callback, #tensorboard_callback, 
-                                keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True, verbose=True)]
+                                keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True, verbose=True)],
+                      class_weight = self._class_weights
                       )
     else:
       #Model is created during Tuning cycle
@@ -841,7 +863,8 @@ class TFAutoModel():
                       max_epochs=10)
       stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
 
-      tuner.search(train_dataset, validation_data=validation_dataset, epochs=50, steps_per_epoch = 100, callbacks=[stop_early])
+      tuner.search(train_dataset, validation_data=validation_dataset, epochs=50, steps_per_epoch = 100, callbacks=[stop_early],
+                   class_weight = self._class_weights)
       # print(f"""
       # The hyperparameter search is complete. The optimal number of units in the first densely-connected
       # layer is {best_hps.get('units')} and the optimal learning rate for the optimizer
