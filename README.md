@@ -1,7 +1,7 @@
 <img src="/logo.png" width="100%"/>
 
-[![Generic badge](https://img.shields.io/badge/version-1.0.1-red.svg)](https://pypi.org/project/auto-tensorflow/)
-[![Generic badge](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/PyPi%20version-1.0.1-red.svg)](https://pypi.org/project/auto-tensorflow/)
+[![Generic badge](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8-blue.svg)](https://shields.io/)
 ![example workflow](https://github.com/rafiqhasan/auto-tensorflow/actions/workflows/codeql-analysis.yml/badge.svg)
 ![Open issues](https://img.shields.io/github/issues-raw/rafiqhasan/auto-tensorflow?color=red)
 ![Closed issues](https://img.shields.io/github/issues-closed-raw/rafiqhasan/auto-tensorflow?color=green)
