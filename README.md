@@ -30,13 +30,13 @@ Built on top of the powerful **Tensorflow** ecosystem like **TFX** , **TF APIs**
 9. No dependency over Pandas / SKLearn
 10. Can handle dataset of any size - including multiple CSV files
 
-### **Setup:**
-1. Install library using - ```pip install auto-tensorflow``` or ```pip install git+https://github.com/rafiqhasan/auto-tensorflow.git```
-2. Works best on UNIX/Linux/Debian/Google Colab/MacOS
-
 ### **Tutorials**:
 1. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rafiqhasan/auto-tensorflow/blob/main/tutorials/TFAuto_%7C_Classification.ipynb) - Auto Classification on CSV data
 2. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rafiqhasan/auto-tensorflow/blob/main/tutorials/TFAuto_%7C_Regression.ipynb) - Auto Regression on CSV data
+
+### **Setup:**
+1. Install library using - ```pip install auto-tensorflow``` or ```pip install git+https://github.com/rafiqhasan/auto-tensorflow.git```
+2. Works best on UNIX/Linux/Debian/Google Colab/MacOS
 
 ### **Usage:**
 1. Initialize TFAuto Engine
