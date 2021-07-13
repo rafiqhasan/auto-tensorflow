@@ -1,5 +1,11 @@
 <img src="/logo.png" width="100%"/>
 
+[![Generic badge](https://img.shields.io/badge/version-1.0.1-red.svg)](https://pypi.org/project/auto-tensorflow/)
+[![Generic badge](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue.svg)](https://shields.io/)
+![example workflow](https://github.com/rafiqhasan/auto-tensorflow/actions/workflows/codeql-analysis.yml/badge.svg)
+![Open issues](https://img.shields.io/github/issues-raw/rafiqhasan/auto-tensorflow?color=red)
+![Closed issues](https://img.shields.io/github/issues-closed-raw/rafiqhasan/auto-tensorflow?color=green)
+
 ### **Mission:**
 **Build Low Code Automated Tensorflow, What-IF explainable models in just 3 lines of code.**
 
@@ -28,6 +34,10 @@ Built on top of the powerful **Tensorflow** ecosystem like **TFX** , **TF APIs**
 1. Install library using - ```pip install auto-tensorflow``` or ```pip install git+https://github.com/rafiqhasan/auto-tensorflow.git```
 2. Works best on UNIX/Linux/Debian/Google Colab/MacOS
 
+### **Tutorials**:
+1. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rafiqhasan/auto-tensorflow/blob/main/tutorials/TFAuto_%7C_Classification.ipynb) - Auto Classification on CSV data
+2. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rafiqhasan/auto-tensorflow/blob/main/tutorials/TFAuto_%7C_Regression.ipynb) - Auto Regression on CSV data
+
 ### **Usage:**
 1. Initialize TFAuto Engine
 ```
@@ -49,8 +59,6 @@ tfa.step_model_build(label_column = 'price', model_type='REGRESSION', model_comp
 ```
 tfa.step_model_whatif()
 ```
-
-**Tutorials**: https://github.com/rafiqhasan/auto-tensorflow/tree/main/tutorials
 
 ### **API Arguments:**
 - Method **TFAuto**
