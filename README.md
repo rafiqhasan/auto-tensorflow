@@ -10,7 +10,7 @@ Built on top of the powerful **Tensorflow** ecosystem like **TFX** , **TF APIs**
 
 <img src="/header.png" width="100%"/>
 
-**Launch**: https://youtu.be/sil-RbuckG0
+### **Official Launch**: https://youtu.be/sil-RbuckG0
 
 ### **Features:**
 1. Build Classification / Regression models on CSV data
@@ -25,8 +25,8 @@ Built on top of the powerful **Tensorflow** ecosystem like **TFX** , **TF APIs**
 10. Can handle dataset of any size - including multiple CSV files
 
 ### **Setup:**
-1. Install library using - ```!pip install auto-tensorflow```
-2. Works best on UNIX/Linux/Debian/Google Colab
+1. Install library using - ```pip install auto-tensorflow``` or ```pip install git+https://github.com/rafiqhasan/auto-tensorflow.git```
+2. Works best on UNIX/Linux/Debian/Google Colab/MacOS
 
 ### **Usage:**
 1. Initialize TFAuto Engine
@@ -74,3 +74,7 @@ There are a few limitations in the initial release but we are working day and ni
 ### **Future roadmap:**
 1. Add support for Timeseries / Audio / Image data
 2. Add feature to download full pipeline model Python code for advanced tweaking
+
+### **Release History:**
+**1.0.1** - 07/07/2021
+- First public release
