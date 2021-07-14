@@ -72,7 +72,7 @@ tfa.step_model_whatif()
 - Method **step_model_build**
   - `label_column`: The feature to be used as Label
   - `model_type`: Either of 'REGRESSION'( Default ), 'CLASSIFICATION'
-  - `model_complexity`: 0 to 1 (0: Model without HPT, 1(Default): Model with HPT) -> More will be added in future
+  - `model_complexity`: 0 to 1 (0: Model without HPT, 1(Default): Model with HPT, 2: Complexity 1 + Also handle Text features)
 
 ### **Current limitations:**
 There are a few limitations in the initial release but we are working day and night to resolve these and **add them as future features**.
@@ -84,5 +84,13 @@ There are a few limitations in the initial release but we are working day and ni
 2. Add feature to download full pipeline model Python code for advanced tweaking
 
 ### **Release History:**
+**1.1.0** - 14/07/2021
+- Fixed bugs
+- Added more features:
+  - Added complexity = 2 for textual features
+  - Textual label for Classification
+  - Imbalanced label handling
+  - GPU fixes
+
 **1.0.1** - 07/07/2021
 - First public release
