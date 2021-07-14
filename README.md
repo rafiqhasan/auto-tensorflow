@@ -72,7 +72,10 @@ tfa.step_model_whatif()
 - Method **step_model_build**
   - `label_column`: The feature to be used as Label
   - `model_type`: Either of 'REGRESSION'( Default ), 'CLASSIFICATION'
-  - `model_complexity`: 0 to 1 (0: Model without HPT, 1(Default): Model with HPT, 2: Complexity 1 + Also handle Text features)
+  - `model_complexity`:
+    - 0: Model without HPT
+    - 1(Default): Model with HPT
+    - 2: Complexity 1 + Also handle Text features( BERT Embedding multilingual )
 
 ### **Current limitations:**
 There are a few limitations in the initial release but we are working day and night to resolve these and **add them as future features**.
