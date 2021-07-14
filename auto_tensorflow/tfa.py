@@ -9,6 +9,7 @@ import urllib
 import absl
 import tensorflow as tf
 import tensorflow.keras as keras
+import tensorflow_text
 import tfx
 import tensorflow_hub as hub
 import kerastuner as kt
@@ -258,7 +259,7 @@ class TFAutoData():
 class TextEncoder(tf.keras.Model):
   def __init__(self):
     super(TextEncoder, self).__init__()
-    self.encoder = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder/4", trainable=False)
+    self.encoder = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder-multilingual/3", trainable=False)
 
   def __call__(self, inp):
     #Preprocess text
@@ -1052,11 +1053,12 @@ class TFAutoModel():
     if self.prechecks() == False:
       raise Exception("Error: Precheck failed for Training start")
 
-    #Run HPT
-    self.search_hpt()
+    with self.strategy.scope():
+      #Run HPT
+      self.search_hpt()
 
-    #Run Trainining and Evaluation
-    self.start_train()
+      #Run Trainining and Evaluation
+      self.start_train()
 
 class TFAuto():
   def __init__(self, train_data_path, test_data_path, path_root='/tfx'):
