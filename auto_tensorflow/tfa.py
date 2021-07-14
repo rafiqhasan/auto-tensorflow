@@ -257,18 +257,23 @@ class TFAutoData():
     return self.pipeline
 
 class TextEncoder(tf.keras.Model):
-  def __init__(self):
-    super(TextEncoder, self).__init__()
-    self.encoder = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder-multilingual/3", trainable=False)
+  def __init__(self, strategy):
+    self.strategy = strategy
+    with self.strategy.scope():
+      super(TextEncoder, self).__init__()
+      self.preprocessor = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder-cmlm/multilingual-preprocess/2", trainable=False)
+      self.encoder = hub.KerasLayer("https://tfhub.dev/google/LaBSE/2", trainable=False)
 
   def __call__(self, inp):
-    #Preprocess text
-    # encoder_inputs = self.preprocessor(inp)
+    with self.strategy.scope():
+      #Preprocess text
+      # encoder_inputs = self.preprocessor(inp)
 
-    #Encode text
-    embedding = self.encoder(inp)
+      #Encode text
+      preprocess = self.preprocessor(inp)
+      embedding = self.encoder(preprocess)["default"]
 
-    return embedding
+      return embedding
 
 class TFAutoModel():
   def __init__(self, _tfx_root, train_data_path, test_data_path):
@@ -320,6 +325,7 @@ class TFAutoModel():
            'learning_rate':[0.01, 0.005, 0.002, 0.001, 0.0005]
         },
     }
+    self.hpt_config[2] = self.hpt_config[1]
     
     ##GPU Strategy
     self.strategy = tf.distribute.MirroredStrategy()
@@ -540,7 +546,7 @@ class TFAutoModel():
     return self._feature_cols
 
   def create_keras_model_classification(self, hp):
-    # with self.strategy.scope():
+    with self.strategy.scope():
       # params = self.params_default
       feature_cols = self._feature_cols
 
@@ -601,15 +607,16 @@ class TFAutoModel():
           #Apply normalization
           feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['mean'] ) / feats['std_dev']
 
-      #Handle Text attributes
+      #Handle Text attributes( For model complexity > 2 )
       feat_text = []
-      text_emb = TextEncoder()
-      for feats in self._config_json['data_schema']:
-        if feats['Type'] == 'STRING':
-          feat_text.append('')
-          
-          #Apply Text Encoding from TFHub
-          feat_text[-1] = text_emb(tf.squeeze(tf.cast(feature_cols['K'][feats['feature']], tf.string)))
+      if self._model_complexity >= 2:
+        text_emb = TextEncoder(self.strategy)
+        for feats in self._config_json['data_schema']:
+          if feats['Type'] == 'STRING':
+            feat_text.append('')
+            
+            #Apply Text Encoding from TFHub
+            feat_text[-1] = text_emb(tf.squeeze(tf.cast(feature_cols['K'][feats['feature']], tf.string)))
 
       ###Create MODEL
       ####Concatenate all features( Numerical input )
@@ -675,13 +682,13 @@ class TFAutoModel():
       hp_learning_rate = hp.Choice('learning_rate', values=self.hpt_config[self._model_complexity]['learning_rate'], ordered=True)
       opt = tf.keras.optimizers.Adam(lr = hp_learning_rate)
 
-      #Compile model
-      model.compile(loss='sparse_categorical_crossentropy',  optimizer=opt, metrics = METRICS)
+    #Compile model
+    model.compile(loss='sparse_categorical_crossentropy',  optimizer=opt, metrics = METRICS)
 
-      return model
+    return model
 
   def create_keras_model_regression(self, hp):
-    # with self.strategy.scope():
+    with self.strategy.scope():
       METRICS = [
               keras.metrics.RootMeanSquaredError(name='rmse'),
               keras.metrics.MeanAbsolutePercentageError(name='mape')
@@ -718,15 +725,16 @@ class TFAutoModel():
           #apply normalization
           feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['mean'] ) / feats['std_dev']
       
-      #Handle Text attributes
+      #Handle Text attributes( For model complexity > 2 )
       feat_text = []
-      text_emb = TextEncoder()
-      for feats in self._config_json['data_schema']:
-        if feats['Type'] == 'STRING':
-          feat_text.append('')
-          
-          #Apply Text Encoding from TFHub
-          feat_text[-1] = text_emb(tf.squeeze(tf.cast(feature_cols['K'][feats['feature']], tf.string)))
+      if self._model_complexity >= 2:
+        text_emb = TextEncoder(self.strategy)
+        for feats in self._config_json['data_schema']:
+          if feats['Type'] == 'STRING':
+            feat_text.append('')
+            
+            #Apply Text Encoding from TFHub
+            feat_text[-1] = text_emb(tf.squeeze(tf.cast(feature_cols['K'][feats['feature']], tf.string)))
 
       ###Create MODEL
       ####Concatenate all features( Numerical input )
@@ -791,10 +799,10 @@ class TFAutoModel():
       hp_learning_rate = hp.Choice('learning_rate', values=self.hpt_config[self._model_complexity]['learning_rate'], ordered=True)
       opt = tf.keras.optimizers.Adam(lr = hp_learning_rate)
 
-      #Compile model
-      model.compile(loss='mean_squared_error',  optimizer=opt, metrics = METRICS)
+    #Compile model
+    model.compile(loss='mean_squared_error',  optimizer=opt, metrics = METRICS)
 
-      return model
+    return model
 
   def keras_train_and_evaluate(self, model, epochs=100, mode='Train'):
     #Add callbacks
@@ -1053,12 +1061,11 @@ class TFAutoModel():
     if self.prechecks() == False:
       raise Exception("Error: Precheck failed for Training start")
 
-    with self.strategy.scope():
-      #Run HPT
-      self.search_hpt()
+    #Run HPT
+    self.search_hpt()
 
-      #Run Trainining and Evaluation
-      self.start_train()
+    #Run Trainining and Evaluation
+    self.start_train()
 
 class TFAuto():
   def __init__(self, train_data_path, test_data_path, path_root='/tfx'):
@@ -1123,7 +1130,7 @@ class TFAuto():
     Parameters
     label_column: The feature to be used as Label
     model_type: Either of 'REGRESSION', 'CLASSIFICATION'
-    model_complexity: 0 to 1 (0: Model without HPT, 1: Model with HPT) -> More will be added in future
+    model_complexity: 0 to 2 (0: Model without HPT, 1: Model with HPT, 2: Complexity 1 + Also handle Text features)
     '''
     # #Run Modeling steps
     if self.tfadata._run == True:
