@@ -6,10 +6,10 @@
 ![Open issues](https://img.shields.io/github/issues-raw/rafiqhasan/auto-tensorflow?color=red)
 ![Closed issues](https://img.shields.io/github/issues-closed-raw/rafiqhasan/auto-tensorflow?color=green)
 
-### **Mission:**
+### **Auto Tensorflow Mission:**
 **Build Low Code Automated Tensorflow, What-IF explainable models in just 3 lines of code.**
 
-Auto Tensorflow aims to make Deep Learning on Tensorflow absolutely easy for the masses with its low code framework and also increase trust on ML models through What-IF model explainability.
+To make Deep Learning on Tensorflow absolutely easy for the masses with its low code framework and also increase trust on ML models through What-IF model explainability.
 
 ### **Under the hood:**
 Built on top of the powerful **Tensorflow** ecosystem tools like **TFX** , **TF APIs** and **What-IF Tool** , the library automatically does all the heavy lifting internally like EDA, schema discovery, feature engineering, HPT, model search etc. This empowers developers to focus only on building end user applications quickly without any knowledge of Tensorflow, ML or debugging. There is no dependency on Pandas / SKLearn or other libraries which makes the whole pipeline highly scalable on any volume of data. Moreover the models trained with auto-tensorflow can directly be deployed on any cloud like GCP / AWS / Azure.
