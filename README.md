@@ -1,7 +1,6 @@
 <img src="/logo.png" width="100%"/>
 
 [![Downloads](https://static.pepy.tech/personalized-badge/auto-tensorflow?period=total&units=international_system&left_color=grey&right_color=brightgreen&left_text=downloads)](https://pepy.tech/project/auto-tensorflow)
-[![Downloads](https://static.pepy.tech/personalized-badge/auto-tensorflow?period=week&units=international_system&left_color=grey&right_color=brightgreen&left_text=downloads/week)](https://pepy.tech/project/auto-tensorflow/week)
 [![Downloads](https://static.pepy.tech/personalized-badge/auto-tensorflow?period=month&units=international_system&left_color=grey&right_color=brightgreen&left_text=downloads/month)](https://pepy.tech/project/auto-tensorflow/month)
 [![Generic badge](https://img.shields.io/pypi/v/auto-tensorflow.svg?logo=pypi&logoColor=white&color=orange)](https://pypi.org/project/auto-tensorflow/)
 ![Python Versions](https://img.shields.io/pypi/pyversions/autoviml.svg?logo=python&logoColor=white)
