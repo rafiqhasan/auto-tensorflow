@@ -75,7 +75,7 @@ tfa.step_model_whatif()
   - `model_complexity`:
     - `0` : Model with default hyper-parameters
     - `1` (Default): Model with automated hyper-parameter tuning
-    - `2` : Complexity 1 + Automated tuning of Text layers
+    - `2` : Complexity 1 + Advanced fine-tuning of Text layers
 
 ### **Current limitations:**
 There are a few limitations in the initial release but we are working day and night to resolve these and **add them as future features**.
