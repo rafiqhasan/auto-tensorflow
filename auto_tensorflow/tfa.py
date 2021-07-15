@@ -257,21 +257,16 @@ class TFAutoData():
     return self.pipeline
 
 class TextEncoder(tf.keras.Model):
-  def __init__(self, strategy):
+  def __init__(self, strategy, trainable=False):
     self.strategy = strategy
     with self.strategy.scope():
       super(TextEncoder, self).__init__()
-      self.preprocessor = hub.KerasLayer("https://tfhub.dev/google/universal-sentence-encoder-cmlm/multilingual-preprocess/2", trainable=False)
-      self.encoder = hub.KerasLayer("https://tfhub.dev/google/LaBSE/2", trainable=False)
+      self.encoder = hub.KerasLayer("https://tfhub.dev/google/tf2-preview/nnlm-en-dim50/1", trainable=trainable)
 
   def __call__(self, inp):
     with self.strategy.scope():
-      #Preprocess text
-      # encoder_inputs = self.preprocessor(inp)
-
       #Encode text
-      preprocess = self.preprocessor(inp)
-      embedding = self.encoder(preprocess)["default"]
+      embedding = self.encoder(inp)
 
       return embedding
 
@@ -607,16 +602,21 @@ class TFAutoModel():
           #Apply normalization
           feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['mean'] ) / feats['std_dev']
 
-      #Handle Text attributes( For model complexity > 2 )
+      #Handle Text attributes
       feat_text = []
-      if self._model_complexity >= 2:
+      if self._model_complexity < 2:
+        #Without fine-tuning
         text_emb = TextEncoder(self.strategy)
-        for feats in self._config_json['data_schema']:
-          if feats['Type'] == 'STRING':
-            feat_text.append('')
-            
-            #Apply Text Encoding from TFHub
-            feat_text[-1] = text_emb(tf.squeeze(tf.cast(feature_cols['K'][feats['feature']], tf.string)))
+      else:
+        #With fine-tuning
+        text_emb = TextEncoder(self.strategy, trainable=True)
+
+      for feats in self._config_json['data_schema']:
+        if feats['Type'] == 'STRING':
+          feat_text.append('')
+          
+          #Apply Text Encoding from TFHub
+          feat_text[-1] = text_emb(tf.reshape(tf.cast(feature_cols['K'][feats['feature']], tf.string), [-1]))
 
       ###Create MODEL
       ####Concatenate all features( Numerical input )
@@ -725,16 +725,21 @@ class TFAutoModel():
           #apply normalization
           feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['mean'] ) / feats['std_dev']
       
-      #Handle Text attributes( For model complexity > 2 )
+      #Handle Text attributes
       feat_text = []
-      if self._model_complexity >= 2:
+      if self._model_complexity < 2:
+        #Without fine-tuning
         text_emb = TextEncoder(self.strategy)
-        for feats in self._config_json['data_schema']:
-          if feats['Type'] == 'STRING':
-            feat_text.append('')
-            
-            #Apply Text Encoding from TFHub
-            feat_text[-1] = text_emb(tf.squeeze(tf.cast(feature_cols['K'][feats['feature']], tf.string)))
+      else:
+        #With fine-tuning
+        text_emb = TextEncoder(self.strategy, trainable=True)
+
+      for feats in self._config_json['data_schema']:
+        if feats['Type'] == 'STRING':
+          feat_text.append('')
+          
+          #Apply Text Encoding from TFHub
+          feat_text[-1] = text_emb(tf.reshape(tf.cast(feature_cols['K'][feats['feature']], tf.string), [-1]))
 
       ###Create MODEL
       ####Concatenate all features( Numerical input )
@@ -1130,7 +1135,7 @@ class TFAuto():
     Parameters
     label_column: The feature to be used as Label
     model_type: Either of 'REGRESSION', 'CLASSIFICATION'
-    model_complexity: 0 to 2 (0: Model without HPT, 1: Model with HPT, 2: Complexity 1 + Also handle Text features)
+    model_complexity: 0 to 2 (0: Model without HPT, 1: Model with HPT, 2: Complexity 1 + Trainable Text Layer)
     '''
     # #Run Modeling steps
     if self.tfadata._run == True:
