@@ -24,7 +24,7 @@ Built on top of the powerful **Tensorflow** ecosystem tools like **TFX** , **TF 
 3. Automated EDA and visualization for automated feature engineering
 4. Automated Model build for mixed data types( Continuous, Categorical and Free Text )
 5. Automated Hyper-parameter tuning
-6. GPU Distributed training
+6. Automated GPU Distributed training
 7. Automated UI based What-IF analysis
 8. Control over complexity of model
 9. No dependency over Pandas / SKLearn
