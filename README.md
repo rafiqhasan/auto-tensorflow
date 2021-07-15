@@ -87,10 +87,10 @@ There are a few limitations in the initial release but we are working day and ni
 2. Add feature to download full pipeline model Python code for advanced tweaking
 
 ### **Release History:**
-**1.1.0** - 14/07/2021
+**1.1.1** - 14/07/2021
 - Fixed bugs
 - Added more features:
-  - Added complexity = 2 for textual features
+  - Added complexity = 2 for automated tunable textual layers
   - Textual label for Classification
   - Imbalanced label handling
   - GPU fixes
