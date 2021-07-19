@@ -20,7 +20,7 @@ tf.get_logger().propagate = False
 
 from tfx.components import CsvExampleGen
 from typing import Dict, List, Text
-from tfx.components import Evaluator, ExampleValidator, Pusher, ResolverNode, SchemaGen, Trainer, StatisticsGen, Transform
+from tfx.components import Evaluator, ExampleValidator, Pusher, SchemaGen, Trainer, StatisticsGen, Transform
 from tfx.components.base import executor_spec
 from tfx.components.trainer.executor import GenericExecutor
 from tfx.dsl.experimental import latest_blessed_model_resolver
@@ -30,7 +30,6 @@ from tfx.proto import pusher_pb2, trainer_pb2
 from tfx.types import Channel
 from tfx.types.standard_artifacts import Model
 from tfx.types.standard_artifacts import ModelBlessing
-from tfx.utils.dsl_utils import external_input
 from tfx.orchestration.local.local_dag_runner import LocalDagRunner
 from ml_metadata.proto import metadata_store_pb2
 from tfx.orchestration.portable.mlmd import execution_lib
@@ -118,7 +117,7 @@ class TFAutoData():
 
   def collect_feature_details(self, schema):
     features_list = []
-    features_dict = display_util.get_schema_dataframe(schema).to_dict('index')
+    features_dict = display_util.get_schema_dataframe(schema)[0].to_dict('index')
     features_stats = MessageToDict(self.stats_train)
     self._len_train = features_stats['datasets'][0]['numExamples']
 
@@ -179,7 +178,7 @@ class TFAutoData():
 
   def run_initial(self, _data_path, _tfx_root, _metadata_db_root, tfautils, viz=False):
     """Run all data steps in pipeline and generate visuals"""
-    self.example_gen = CsvExampleGen(input=external_input(_data_path))
+    self.example_gen = CsvExampleGen(input_base=_data_path)
 
     self.statistics_gen = StatisticsGen(examples=self.example_gen.outputs['examples'])
 
