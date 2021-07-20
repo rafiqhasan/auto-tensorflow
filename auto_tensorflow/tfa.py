@@ -148,9 +148,19 @@ class TFAutoData():
         elif curr_feat == features_dict[f_]['feature'] and features_dict[f_]['Type'] == 'CATEGORICAL':
           features_dict[f_]['categorical_values_count'] = {}
           features_dict[f_]['categorical_values_count_total'] = 0
-          for topvals in feat['stringStats']['topValues']:            
-            features_dict[f_]['categorical_values_count'][topvals.get('value', "NA")] = topvals.get('frequency', 0)
-            features_dict[f_]['categorical_values_count_total'] += topvals.get('frequency', 0)
+          #For each categorical value store counts
+          for categ in features_dict[f_]['categorical_values']:
+            categ_found = 0
+            for topvals in feat['stringStats']['topValues']:
+              if categ == topvals['value']:
+                categ_found = 1
+                features_dict[f_]['categorical_values_count'][topvals.get('value', "NA")] = topvals.get('frequency', 0)
+                features_dict[f_]['categorical_values_count_total'] += topvals.get('frequency', 0)
+                break
+            #If value count for this category not present
+            if categ_found == 0:
+              features_dict[f_]['categorical_values_count'][categ] = 1
+              features_dict[f_]['categorical_values_count_total'] += 1
       
       features_list.append(features_dict[f_])
     self.features_list = features_list
