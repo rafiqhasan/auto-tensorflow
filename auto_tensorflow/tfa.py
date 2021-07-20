@@ -599,7 +599,10 @@ class TFAutoModel():
           feat_numeric.append('')
           
           #Apply normalization
-          feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['mean'] ) / feats['std_dev']
+          if feats['std_dev'] != 0:
+            feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['mean'] ) / feats['std_dev']
+          else:
+            feat_numeric[-1] = tf.cast(feature_cols['K'][feats['feature']], tf.float32)
 
       #Handle Text attributes
       feat_text = []
@@ -722,7 +725,10 @@ class TFAutoModel():
           feat_numeric.append('')
           
           #apply normalization
-          feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['mean'] ) / feats['std_dev']
+          if feats['std_dev'] != 0:
+            feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['mean'] ) / feats['std_dev']
+          else:
+            feat_numeric[-1] = tf.cast(feature_cols['K'][feats['feature']], tf.float32)
       
       #Handle Text attributes
       feat_text = []
@@ -873,6 +879,7 @@ class TFAutoModel():
       tuner = kt.Hyperband(
                       mod_func,
                       objective='val_loss',
+                      overwrite='True',
                       max_epochs=10)
       stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
 
@@ -968,9 +975,10 @@ class TFAutoModel():
     return examples
 
   #Create prediction function to link in WIT
-  def wit_prediction_fn_dyn(self, examples):
+  def wit_prediction_fn_dyn(self, examples, check_mode=False):
     version = "1"
     out = []
+    examples_out = []
 
     #LOCAL: Predict using Keras prediction function
     saved_mod = tf.saved_model.load(self._model_root + "/"  + version)   #Location)
@@ -1001,16 +1009,26 @@ class TFAutoModel():
       #Run prediction function on saved model
       # print(keyword_args)
       # break
-      pred = mod_fn(**keyword_args)
+      try:
+        pred = mod_fn(**keyword_args)
 
-      p_ = pred['out'].numpy()
-      out.append(p_[0])
+        p_ = pred['out'].numpy()
+        out.append(p_[0])
+        examples_out.append(ex)
+      except:
+        1 - 1
     
-    return out
+    if check_mode==True:
+      #If we want to find also the valid examples
+      return out, examples_out
+    else:
+      return out
 
   def call_wit(self):
-    #Generate examples for WIT
+    #Generate examples for WIT and also check for valid examples
     examples_wit = self.generate_examples_for_wit()
+    _, examples_wit = self.wit_prediction_fn_dyn(examples_wit, check_mode=True)
+
     if self._model_type == 'REGRESSION':
       wit_type = 'regression'
       config_builder = (WitConfigBuilder(examples_wit, self._config_json['file_headers'])
@@ -1054,6 +1072,7 @@ class TFAutoModel():
     return success_flag
 
   def run_initial(self, label_column, model_type='REGRESSION', model_complexity=1):
+    self.__init__(self._tfx_root, self._train_data_path, self._test_data_path)
     """Run all modeling steps in pipeline and generate results"""
     self._label = label_column
     self._model_type = model_type
