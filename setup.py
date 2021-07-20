@@ -38,7 +38,7 @@ setuptools.setup(
         "tensorflow==2.5.0",
         "tensorflow_hub==0.12.0",
         "tensorflow_text==2.5.0",
-        "tfx==0.29.0",
+        "tfx==1.0.0rc2",
         "witwidget==1.8.0"
     ],
     classifiers=[
