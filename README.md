@@ -25,7 +25,7 @@ Built on top of the powerful **Tensorflow** ecosystem tools like **TFX** , **TF 
 4. Automated Model build for mixed data types( Continuous, Categorical and Free Text )
 5. Automated Hyper-parameter tuning
 6. Automated GPU Distributed training
-7. Automated UI based What-IF analysis
+7. Automated UI based What-IF analysis( Fairness, Feature Partial dependencies, What-IF )
 8. Control over complexity of model
 9. No dependency over Pandas / SKLearn
 10. Can handle dataset of any size - including multiple CSV files
