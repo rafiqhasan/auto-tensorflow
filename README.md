@@ -35,7 +35,9 @@ Built on top of the powerful **Tensorflow** ecosystem tools like **TFX** , **TF 
 2. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rafiqhasan/auto-tensorflow/blob/main/tutorials/TFAuto_%7C_Regression.ipynb) - Auto Regression on CSV data
 
 ### **Setup:**
-1. Install library using - ```pip install auto-tensorflow``` or ```pip install git+https://github.com/rafiqhasan/auto-tensorflow.git```
+1. Install library
+    - PIP(Recommended): ```pip install auto-tensorflow```
+    - Nightly: ```pip install git+https://github.com/rafiqhasan/auto-tensorflow.git```
 2. Works best on UNIX/Linux/Debian/Google Colab/MacOS
 
 ### **Usage:**
