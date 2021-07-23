@@ -26,7 +26,8 @@ from tfx.components.trainer.executor import GenericExecutor
 from tfx.dsl.experimental import latest_blessed_model_resolver
 from tfx.orchestration import metadata, pipeline
 from tfx.orchestration.experimental.interactive.interactive_context import InteractiveContext
-from tfx.proto import pusher_pb2, trainer_pb2
+from tfx.proto import pusher_pb2, trainer_pb2, example_gen_pb2
+from tfx.v1 import proto
 from tfx.types import Channel
 from tfx.types.standard_artifacts import Model
 from tfx.types.standard_artifacts import ModelBlessing
@@ -186,9 +187,13 @@ class TFAutoData():
     for example in dataset.take(1):
       return ([e.numpy().decode('utf-8') for e in example])
 
-  def run_initial(self, _data_path, _tfx_root, _metadata_db_root, tfautils, viz=False):
+  def run_initial(self, _train_data_path, _test_data_path, _tfx_root, _metadata_db_root, tfautils, viz=False):
     """Run all data steps in pipeline and generate visuals"""
-    self.example_gen = CsvExampleGen(input_base=_data_path)
+    input = proto.Input(splits=[
+                example_gen_pb2.Input.Split(name='train', pattern=os.path.join(_train_data_path, "*")),
+                example_gen_pb2.Input.Split(name='eval', pattern=os.path.join(_test_data_path, "*"))
+            ])
+    self.example_gen = CsvExampleGen(input_base="/", input_config=input)
 
     self.statistics_gen = StatisticsGen(examples=self.example_gen.outputs['examples'])
 
@@ -239,7 +244,7 @@ class TFAutoData():
     self.features_list = self.collect_feature_details(self.schema)
 
     #Get columns from training file
-    self.file_headers = self.get_columns_from_file_header(_data_path, len(self.features_list))
+    self.file_headers = self.get_columns_from_file_header(_train_data_path, len(self.features_list))
 
     # Visualize results using TFDV
     if viz==True:
@@ -311,7 +316,8 @@ class TFAutoModel():
                 'min':32,
                 'max':32
            },
-           'learning_rate':[0.01]
+           'learning_rate':[0.01],
+           'l1_regularization':[0.00001]
         },
         1:{
             'deep_neurons':{
@@ -326,7 +332,8 @@ class TFAutoModel():
                 'min':32,
                 'max':128
            },
-           'learning_rate':[0.01, 0.005, 0.002, 0.001, 0.0005]
+           'learning_rate':[0.01, 0.005, 0.002, 0.001, 0.0005],
+           'l1_regularization':[0.0001,0.00005,0.00001]
         },
     }
     self.hpt_config[2] = self.hpt_config[1]
@@ -613,6 +620,11 @@ class TFAutoModel():
             feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['mean'] ) / feats['std_dev']
           else:
             feat_numeric[-1] = tf.cast(feature_cols['K'][feats['feature']], tf.float32)
+          
+          #More feature engineering( Squaring )
+          feat_numeric.append('')
+          feat_numeric[-1] = tf.math.pow(feat_numeric[-2], 2)
+
 
       #Handle Text attributes
       feat_text = []
@@ -681,8 +693,9 @@ class TFAutoModel():
       prefinal_dense = hp.Int('prefinal_dense', min_value=self.hpt_config[self._model_complexity]['prefinal_dense']['min'], 
                                                 max_value=self.hpt_config[self._model_complexity]['prefinal_dense']['max'],
                               step=32)
+      l1_reg = hp.Choice('l1_regularization', values=self.hpt_config[self._model_complexity]['l1_regularization'], ordered=True)
       x = tf.keras.layers.Dense(prefinal_dense, activation='relu', kernel_initializer="he_uniform",
-                                activity_regularizer=tf.keras.regularizers.l2(0.00001))(x)
+                                activity_regularizer=tf.keras.regularizers.l2(l1_reg))(x)
       x = tf.keras.layers.BatchNormalization()(x)
 
       #Final Layer
@@ -739,6 +752,10 @@ class TFAutoModel():
             feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['mean'] ) / feats['std_dev']
           else:
             feat_numeric[-1] = tf.cast(feature_cols['K'][feats['feature']], tf.float32)
+
+          # #More feature engineering( Squaring )
+          feat_numeric.append('')
+          feat_numeric[-1] = tf.math.pow(feat_numeric[-2], 2)
       
       #Handle Text attributes
       feat_text = []
@@ -807,8 +824,9 @@ class TFAutoModel():
       prefinal_dense = hp.Int('prefinal_dense', min_value=self.hpt_config[self._model_complexity]['prefinal_dense']['min'], 
                                                 max_value=self.hpt_config[self._model_complexity]['prefinal_dense']['max'],
                               step=32)
+      l1_reg = hp.Choice('l1_regularization', values=self.hpt_config[self._model_complexity]['l1_regularization'], ordered=True)
       x = tf.keras.layers.Dense(prefinal_dense, activation='relu', kernel_initializer="he_uniform",
-                                activity_regularizer=tf.keras.regularizers.l2(0.00001))(x)
+                                activity_regularizer=tf.keras.regularizers.l2(l1_reg))(x)
       x = tf.keras.layers.BatchNormalization()(x)
 
       #Final Layer
@@ -1115,7 +1133,8 @@ class TFAuto():
     self._metadata = os.path.join(self._tfx_root, 'metadata');    # Join ~/tfx/metadata
     self._log_root = os.path.join(self._tfx_root, 'logs');
     self._model_root = os.path.join(self._tfx_root, 'model');
-    self._data_path = train_data_path
+    self._train_data_path = train_data_path
+    self._test_data_path = test_data_path
 
     self._input_fn_module_file = 'inputfn_trainer.py'
     self._constants_module_file = 'constants_trainer.py'
@@ -1154,7 +1173,7 @@ class TFAuto():
     Method to automatically estimate schema of Data
     Viz: (False) Is data visualization required ?
     '''
-    self.pipeline = self.tfadata.run_initial(self._data_path, self._tfx_root, self._metadata_db_root, self.tfautils, viz)
+    self.pipeline = self.tfadata.run_initial(self._train_data_path, self._test_data_path, self._tfx_root, self._metadata_db_root, self.tfautils, viz)
     self.generate_config_json()
 
   def step_model_build(self, label_column, model_type='REGRESSION', model_complexity=1):
