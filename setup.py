@@ -18,7 +18,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="auto_tensorflow",
-    version="1.1.1",
+    version="1.2.0",
     author="Hasan Rafiq",
     description="""
     Build Low Code Automated Tensorflow, What-IF explainable models in just 3 lines of code.
