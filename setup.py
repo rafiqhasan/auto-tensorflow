@@ -39,7 +39,13 @@ setuptools.setup(
         "tensorflow_hub==0.12.0",
         "tensorflow_text==2.5.0",
         "tfx==1.0.0",
-        "witwidget==1.8.0"
+        "witwidget==1.8.0",
+        "tensorflow-metadata==1.0.0",
+        "ipython==7.25.0",
+        "tensorflow-estimator==2.5.0",
+        "joblib==0.14.1",
+        "tensorboard-plugin-wit==1.8.0",
+        "tensorboard-data-server==0.6.1"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
