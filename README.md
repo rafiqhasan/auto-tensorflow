@@ -89,6 +89,8 @@ There are a few limitations in the initial release but we are working day and ni
 2. Add feature to download full pipeline model Python code for advanced tweaking
 
 ### **Release History:**
+**1.2.0** - 14/07/2021 - [Release Notes](https://github.com/rafiqhasan/auto-tensorflow/releases/tag/1.2.0)
+
 **1.1.1** - 14/07/2021 - [Release Notes](https://github.com/rafiqhasan/auto-tensorflow/releases/tag/1.1.1)
 
 **1.0.1** - 07/07/2021 - [Release Notes](https://github.com/rafiqhasan/auto-tensorflow/releases/tag/1.0.1)
