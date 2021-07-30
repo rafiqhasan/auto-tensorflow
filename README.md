@@ -1,6 +1,6 @@
 <img src="/logo.png" width="100%"/>
 
-[![Downloads](https://static.pepy.tech/personalized-badge/auto-tensorflow?period=total&units=international_system&left_color=grey&right_color=brightgreen&left_text=downloads&kill_cache=1)](https://pepy.tech/project/auto-tensorflow)
+[![Downloads](https://static.pepy.tech/personalized-badge/auto-tensorflow?period=month&units=none&left_color=grey&right_color=green&left_text=Downloads)](https://pepy.tech/project/auto-tensorflow)
 [![Generic badge](https://img.shields.io/pypi/v/auto-tensorflow.svg?logo=pypi&logoColor=white&color=orange)](https://pypi.org/project/auto-tensorflow/)
 ![Generic badge](https://img.shields.io/badge/python-v3.6%20%7C%203.7%20%7C%203.8-blue)
 ![example workflow](https://github.com/rafiqhasan/auto-tensorflow/actions/workflows/codeql-analysis.yml/badge.svg)
