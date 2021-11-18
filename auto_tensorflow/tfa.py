@@ -12,7 +12,7 @@ import tensorflow.keras as keras
 import tensorflow_text
 import tfx
 import tensorflow_hub as hub
-import kerastuner as kt
+import keras_tuner as kt
 import tensorflow_model_analysis as tfma
 import witwidget
 import tensorflow_data_validation as tfdv
@@ -21,23 +21,15 @@ tf.get_logger().propagate = False
 from tfx.components import CsvExampleGen
 from typing import Dict, List, Text
 from tfx.components import Evaluator, ExampleValidator, Pusher, SchemaGen, Trainer, StatisticsGen, Transform
-from tfx.components.base import executor_spec
-from tfx.components.trainer.executor import GenericExecutor
-from tfx.dsl.experimental import latest_blessed_model_resolver
 from tfx.orchestration import metadata, pipeline
 from tfx.orchestration.experimental.interactive.interactive_context import InteractiveContext
 from tfx.proto import pusher_pb2, trainer_pb2, example_gen_pb2
 from tfx.v1 import proto
-from tfx.types import Channel
-from tfx.types.standard_artifacts import Model
-from tfx.types.standard_artifacts import ModelBlessing
 from tfx.orchestration.local.local_dag_runner import LocalDagRunner
 from ml_metadata.proto import metadata_store_pb2
 from tfx.orchestration.portable.mlmd import execution_lib
-from tfx.types import standard_component_specs
 from tensorflow_metadata.proto.v0 import anomalies_pb2
 from tensorflow_data_validation.utils import io_util, display_util
-from google.protobuf import text_format
 from google.protobuf.json_format import MessageToDict
 from witwidget.notebook.visualization import WitConfigBuilder
 from witwidget.notebook.visualization import WitWidget
@@ -90,7 +82,7 @@ class TFAutoUtils():
   #Get all running artifact details from MLMD
   def _get_artifacts_for_component_id(self, metadata, execution):
     return execution_lib.get_artifacts_dict(metadata, execution.id,
-                                          metadata_store_pb2.Event.OUTPUT)
+                                          [metadata_store_pb2.Event.OUTPUT])
   
   #Get all running artifact directories from MLMD for later uses
   def get_artifacts_directories(self, component_name='StatisticsGen'):
@@ -252,17 +244,10 @@ class TFAutoData():
       print("\n### Generating schema visuals")
       tfdv.display_schema(self.schema)
 
-      #Show Train Schema Stats
-      print("\n### Generating Train Data Statistics Visuals...")
-      tfdv.visualize_statistics(self.stats_train)
-
-      #Show Eval Schema Stats
-      print("\n### Generating Test Data Statistics Visuals...")
-      tfdv.visualize_statistics(self.stats_eval)
-
-      #Show Train Anomalies
-      print("\n### Generating Train Data Anomaly Visuals...")
-      tfdv.display_anomalies(self.anom_train)
+      #Show Train Vs Eval Schema Stats
+      print("\n### Generating Comparative Statistics Visuals...")
+      tfdv.visualize_statistics(lhs_statistics=self.stats_eval, rhs_statistics=self.stats_train,
+                          lhs_name='EVAL_DATASET', rhs_name='TRAIN_DATASET')
 
       #Show Eval Anomalies
       print("\n### Generating Test Data Anomaly Visuals...")
@@ -366,7 +351,7 @@ class TFAutoModel():
           continue
 
         #Logic for default values
-        if feats['Type'] in [ 'CATEGORICAL', 'STRING' ]:
+        if feats['Type'] in [ 'CATEGORICAL', 'STRING', 'BYTES' ]:
           DEFAULTS.append([''])
         elif feats['Type'] == 'FLOAT':
           DEFAULTS.append([tf.cast(0, tf.float32)])
@@ -388,7 +373,7 @@ class TFAutoModel():
           continue
 
         #Convert dtype of all tensors as per requested schema
-        if feats['Type'] in [ 'CATEGORICAL', 'STRING' ] and features[feats['feature']].dtype != tf.string:
+        if feats['Type'] in [ 'CATEGORICAL', 'STRING', 'BYTES' ] and features[feats['feature']].dtype != tf.string:
           features[feats['feature']] = tf.strings.as_string(features[feats['feature']])
         elif feats['Type'] == 'FLOAT' and features[feats['feature']].dtype != tf.float32:
           #Needs special handling for strings
@@ -543,7 +528,7 @@ class TFAutoModel():
         continue
 
       #Create feature columns list
-      if feats['Type'] in [ 'CATEGORICAL', 'STRING' ]:
+      if feats['Type'] in [ 'CATEGORICAL', 'STRING', 'BYTES' ]:
         feats_dict[feats['feature']] = tf.keras.Input(name=feats['feature'], shape=(1,), dtype=tf.string)
       elif feats['Type'] == 'FLOAT':
         feats_dict[feats['feature']] = tf.keras.Input(name=feats['feature'], shape=(1,), dtype=tf.float32)
@@ -612,7 +597,7 @@ class TFAutoModel():
       #Handle numerical attributes
       feat_numeric = []
       for feats in self._config_json['data_schema']:
-        if feats['feature'] in self._features and feats['Type'] not in [ 'CATEGORICAL', 'STRING' ]:
+        if feats['feature'] in self._features and feats['Type'] not in [ 'CATEGORICAL', 'STRING', 'BYTES' ]:
           feat_numeric.append('')
           
           #Apply normalization
@@ -625,6 +610,10 @@ class TFAutoModel():
           feat_numeric.append('')
           feat_numeric[-1] = tf.math.pow(feat_numeric[-2], 2)
 
+          #Apply min-max scaling
+          feat_numeric.append('')
+          if feats['max'] - feats['min'] != 0:
+            feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['min'] ) / ( feats['max'] - feats['min'] ) 
 
       #Handle Text attributes
       feat_text = []
@@ -636,7 +625,7 @@ class TFAutoModel():
         text_emb = TextEncoder(self.strategy, trainable=True)
 
       for feats in self._config_json['data_schema']:
-        if feats['Type'] == 'STRING':
+        if feats['Type'] in ['STRING', 'BYTES']:
           feat_text.append('')
           
           #Apply Text Encoding from TFHub
@@ -744,7 +733,7 @@ class TFAutoModel():
       #Handle numerical attributes
       feat_numeric = []
       for feats in self._config_json['data_schema']:
-        if feats['feature'] in self._features and feats['Type'] not in [ 'CATEGORICAL', 'STRING' ]:
+        if feats['feature'] in self._features and feats['Type'] not in [ 'CATEGORICAL', 'STRING', 'BYTES' ]:
           feat_numeric.append('')
           
           #apply normalization
@@ -753,9 +742,14 @@ class TFAutoModel():
           else:
             feat_numeric[-1] = tf.cast(feature_cols['K'][feats['feature']], tf.float32)
 
-          # #More feature engineering( Squaring )
+          ##More feature engineering( Squaring )
           feat_numeric.append('')
           feat_numeric[-1] = tf.math.pow(feat_numeric[-2], 2)
+
+          #Apply min-max scaling
+          feat_numeric.append('')
+          if feats['max'] - feats['min'] != 0:
+            feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['min'] ) / ( feats['max'] - feats['min'] ) 
       
       #Handle Text attributes
       feat_text = []
@@ -767,7 +761,7 @@ class TFAutoModel():
         text_emb = TextEncoder(self.strategy, trainable=True)
 
       for feats in self._config_json['data_schema']:
-        if feats['Type'] == 'STRING':
+        if feats['Type'] in ['STRING', 'BYTES']:
           feat_text.append('')
           
           #Apply Text Encoding from TFHub
@@ -991,7 +985,7 @@ class TFAutoModel():
               continue
 
             #Prepare example data
-            if feats['Type'] in [ 'CATEGORICAL', 'STRING' ]:
+            if feats['Type'] in [ 'CATEGORICAL', 'STRING', 'BYTES' ]:
               example.features.feature[f_].bytes_list.value.append(out[f_][row])
             elif feats['Type'] == 'FLOAT':
               example.features.feature[f_].float_list.value.append(out[f_][row])
@@ -1027,7 +1021,7 @@ class TFAutoModel():
             continue
 
           #Prepare example data
-          if feats['Type'] in [ 'CATEGORICAL', 'STRING' ]:
+          if feats['Type'] in [ 'CATEGORICAL', 'STRING', 'BYTES' ]:
             keyword_args[f_] = tf.convert_to_tensor([test_data.feature[f_].bytes_list.value])
           elif feats['Type'] == 'FLOAT':
             keyword_args[f_] = tf.convert_to_tensor([test_data.feature[f_].float_list.value])
@@ -1080,7 +1074,7 @@ class TFAutoModel():
         continue
 
       # Only allow numerical values for REGRESSION models
-      if feats['Type'] in [ 'CATEGORICAL', 'STRING' ] and self._model_type == "REGRESSION":
+      if feats['Type'] in [ 'CATEGORICAL', 'STRING', 'BYTES' ] and self._model_type == "REGRESSION":
         print("Error: REGRESSION - labels should be numerical only")
         success_flag = False
         return success_flag
