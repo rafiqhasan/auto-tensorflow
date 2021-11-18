@@ -13,7 +13,7 @@ import tensorflow_text
 import tfx
 import tensorflow_hub as hub
 import keras_tuner as kt
-import tensorflow_model_analysis as tfma
+# import tensorflow_model_analysis as tfma
 import witwidget
 import tensorflow_data_validation as tfdv
 tf.get_logger().propagate = False
