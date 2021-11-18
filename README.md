@@ -82,13 +82,14 @@ tfa.step_model_whatif()
 ### **Current limitations:**
 There are a few limitations in the initial release but we are working day and night to resolve these and **add them as future features**.
 1. Doesn't support Image / Audio data
-2. Doesn't support - quote delimited CSVs( TFX doesn't support qCSV yet )
 
 ### **Future roadmap:**
 1. Add support for Timeseries / Audio / Image data
 2. Add feature to download full pipeline model Python code for advanced tweaking
 
 ### **Release History:**
+**1.3.0** - 18/11/2021 - [Release Notes](https://github.com/rafiqhasan/auto-tensorflow/releases/tag/1.3.0)
+
 **1.2.0** - 24/07/2021 - [Release Notes](https://github.com/rafiqhasan/auto-tensorflow/releases/tag/1.2.0)
 
 **1.1.1** - 14/07/2021 - [Release Notes](https://github.com/rafiqhasan/auto-tensorflow/releases/tag/1.1.1)
