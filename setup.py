@@ -21,9 +21,7 @@ setuptools.setup(
     version="1.3.0",
     author="Hasan Rafiq",
     description="""
-    Build Low Code Automated Tensorflow, What-IF explainable models in just 3 lines of code.
-
-    To make Deep Learning on Tensorflow absolutely easy for the masses with its low code framework and also increase trust on ML models through What-IF model explainability.
+    Build Low Code Automated Tensorflow, What-IF explainable models in just 3 lines of code. To make Deep Learning on Tensorflow absolutely easy for the masses with its low code framework and also increase trust on ML models through What-IF model explainability.
     """,
     long_description=long_description,
     long_description_content_type="text/markdown",
