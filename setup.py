@@ -18,7 +18,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="auto_tensorflow",
-    version="1.2.0",
+    version="1.3.0",
     author="Hasan Rafiq",
     description="""
     Build Low Code Automated Tensorflow, What-IF explainable models in just 3 lines of code.
@@ -34,15 +34,15 @@ setuptools.setup(
     ],
     include_package_data=True,
     install_requires=[
-        "keras-tuner==1.0.1",
-        "tensorflow==2.5.0",
+        "keras-tuner==1.0.4",
+        "tensorflow==2.6.2",
         "tensorflow_hub==0.12.0",
-        "tensorflow_text==2.5.0",
-        "tfx==1.0.0",
+        "tensorflow_text==2.6.0",
+        "tfx==1.4.0",
         "witwidget==1.8.0",
-        "tensorflow-metadata==1.0.0",
-        "ipython==7.25.0",
-        "tensorflow-estimator==2.5.0",
+        "tensorflow-metadata==1.4.0",
+        "ipython==7.29.0",
+        "tensorflow-estimator==2.6.0",
         "joblib==0.14.1",
         "tensorboard-plugin-wit==1.8.0",
         "tensorboard-data-server==0.6.1"
