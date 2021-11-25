@@ -18,7 +18,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="auto_tensorflow",
-    version="1.3.1",
+    version="1.3.2",
     author="Hasan Rafiq",
     description="""Build Low Code Automated Tensorflow, What-IF explainable models in just 3 lines of code. To make Deep Learning on Tensorflow absolutely easy for the masses with its low code framework and also increase trust on ML models through What-IF model explainability.""",
     long_description=long_description,
@@ -41,7 +41,9 @@ setuptools.setup(
         "tensorflow-estimator==2.6.0",
         "joblib==0.14.1",
         "tensorboard-plugin-wit==1.8.0",
-        "tensorboard-data-server==0.6.1"
+        "tensorboard-data-server==0.6.1",
+        "google-api-core==1.31.4",
+        "google-cloud==0.34.0"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
