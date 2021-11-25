@@ -286,7 +286,7 @@ class TFAutoModel():
     self._model_type = ''
     self._model_complexity = 1
     self._defaults = []
-    self._run = False           #Run flag
+    self._run = False                                                     #Run flag
     self.hpt_config = {
         0:{
             'deep_neurons':{
@@ -301,24 +301,44 @@ class TFAutoModel():
                 'min':32,
                 'max':32
            },
-           'learning_rate':[0.01],
-           'l1_regularization':[0.00001]
+           'learning_rate':{
+                'min':0.01,
+                'max':0.01
+            },
+           'bins':{
+                'min':10,
+                'max':10
+            },
+           'l1_regularization':{
+                'min':0.0001,
+                'max':0.0001
+            },
         },
         1:{
             'deep_neurons':{
-                'min':32,
-                'max':512
+                'min':8,
+                'max':1024
             },
            'wide_neurons':{
                 'min':32,
-                'max':512
+                'max':2048
            },
            'prefinal_dense': {
-                'min':32,
-                'max':128
+                'min':8,
+                'max':512
            },
-           'learning_rate':[0.01, 0.005, 0.002, 0.001, 0.0005],
-           'l1_regularization':[0.0001,0.00005,0.00001]
+           'learning_rate':{
+                'min':0.0005,
+                'max':0.1
+            },
+           'bins':{
+                'min':4,
+                'max':40
+            },
+           'l1_regularization':{
+                'min':0.00001,
+                'max':0.0001
+            },
         },
     }
     self.hpt_config[2] = self.hpt_config[1]
@@ -611,9 +631,18 @@ class TFAutoModel():
           feat_numeric[-1] = tf.math.pow(feat_numeric[-2], 2)
 
           #Apply min-max scaling
-          feat_numeric.append('')
           if feats['max'] - feats['min'] != 0:
-            feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['min'] ) / ( feats['max'] - feats['min'] ) 
+            feat_numeric.append('')
+            feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['min'] ) / ( feats['max'] - feats['min'] )
+
+          ##SPECIAL HANDLING CONVERT NUMERIC TO CATEG
+          #Bucketization( 2 to 40 )
+          feat_cat.append('')
+          no_of_bins = hp.Int('bins_' + feats['feature'], min_value=self.hpt_config[self._model_complexity]['bins']['min'], 
+                                              max_value=self.hpt_config[self._model_complexity]['bins']['max'])
+          bins = tf.linspace(feats['min'], feats['max'], no_of_bins)
+          layer_discretization = tf.keras.layers.Discretization(bin_boundaries=bins)(feature_cols['K'][feats['feature']])
+          feat_cat[-1] = tf.keras.layers.experimental.preprocessing.CategoryEncoding(num_tokens = no_of_bins + 2)(layer_discretization)
 
       #Handle Text attributes
       feat_text = []
@@ -640,9 +669,9 @@ class TFAutoModel():
         
         #DEEP - This Dense layer connects to input layer - Numeric Data
         deep_neurons = hp.Int('deep_neurons', min_value=self.hpt_config[self._model_complexity]['deep_neurons']['min'], 
-                                              max_value=self.hpt_config[self._model_complexity]['deep_neurons']['max'],
-                              step=32)
-        x_numeric = tf.keras.layers.Dense(deep_neurons, activation='relu', kernel_initializer="he_uniform")(x_input_numeric)
+                                              max_value=self.hpt_config[self._model_complexity]['deep_neurons']['max'])
+        x_numeric = tf.keras.layers.Dense(deep_neurons, kernel_initializer='lecun_normal',
+                                activation='selu')(x_input_numeric)
         x_numeric = tf.keras.layers.BatchNormalization()(x_numeric)
 
       ####Concatenate all Categorical features( Categorical converted )
@@ -659,9 +688,9 @@ class TFAutoModel():
         
         #WIDE - This Dense layer connects to input layer - Categorical Data
         wide_neurons = hp.Int('wide_neurons', min_value=self.hpt_config[self._model_complexity]['wide_neurons']['min'],
-                                              max_value=self.hpt_config[self._model_complexity]['wide_neurons']['max'], 
-                              step=32)
-        x_categ = tf.keras.layers.Dense(wide_neurons, activation='relu', kernel_initializer="he_uniform")(x_input_categ)
+                                              max_value=self.hpt_config[self._model_complexity]['wide_neurons']['max'])
+        x_categ = tf.keras.layers.Dense(wide_neurons, kernel_initializer='lecun_normal',
+                                activation='selu')(x_input_categ)
 
       ####Concatenate both Wide and Deep layers
       if numeric_features_count > 0 and categ_features_count > 0 and text_features_count > 0:
@@ -680,10 +709,11 @@ class TFAutoModel():
         x = x_input_text 
 
       prefinal_dense = hp.Int('prefinal_dense', min_value=self.hpt_config[self._model_complexity]['prefinal_dense']['min'], 
-                                                max_value=self.hpt_config[self._model_complexity]['prefinal_dense']['max'],
-                              step=32)
-      l1_reg = hp.Choice('l1_regularization', values=self.hpt_config[self._model_complexity]['l1_regularization'], ordered=True)
-      x = tf.keras.layers.Dense(prefinal_dense, activation='relu', kernel_initializer="he_uniform",
+                                                max_value=self.hpt_config[self._model_complexity]['prefinal_dense']['max'])
+      l1_reg = hp.Float('l1_regularization', min_value=self.hpt_config[self._model_complexity]['l1_regularization']['min'], 
+                                                max_value=self.hpt_config[self._model_complexity]['l1_regularization']['max'])
+      x = tf.keras.layers.Dense(prefinal_dense, kernel_initializer='lecun_normal',
+                                activation='selu',
                                 activity_regularizer=tf.keras.regularizers.l2(l1_reg))(x)
       x = tf.keras.layers.BatchNormalization()(x)
 
@@ -693,7 +723,8 @@ class TFAutoModel():
       model = tf.keras.Model(input_feats, out)
 
       #Set optimizer
-      hp_learning_rate = hp.Choice('learning_rate', values=self.hpt_config[self._model_complexity]['learning_rate'], ordered=True)
+      hp_learning_rate = hp.Float('learning_rate', min_value=self.hpt_config[self._model_complexity]['learning_rate']['min'], 
+                                                max_value=self.hpt_config[self._model_complexity]['learning_rate']['max'])
       opt = tf.keras.optimizers.Adam(lr = hp_learning_rate)
 
     #Compile model
@@ -747,9 +778,18 @@ class TFAutoModel():
           feat_numeric[-1] = tf.math.pow(feat_numeric[-2], 2)
 
           #Apply min-max scaling
-          feat_numeric.append('')
           if feats['max'] - feats['min'] != 0:
-            feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['min'] ) / ( feats['max'] - feats['min'] ) 
+            feat_numeric.append('')
+            feat_numeric[-1] = ( tf.cast(feature_cols['K'][feats['feature']], tf.float32) - feats['min'] ) / ( feats['max'] - feats['min'] )
+
+          ##SPECIAL HANDLING CONVERT NUMERIC TO CATEG
+          #Bucketization( 2 to 40 )
+          feat_cat.append('')
+          no_of_bins = hp.Int('bins_' + feats['feature'], min_value=self.hpt_config[self._model_complexity]['bins']['min'], 
+                                              max_value=self.hpt_config[self._model_complexity]['bins']['max'])
+          bins = tf.linspace(feats['min'], feats['max'], no_of_bins)
+          layer_discretization = tf.keras.layers.Discretization(bin_boundaries=bins)(feature_cols['K'][feats['feature']])
+          feat_cat[-1] = tf.keras.layers.experimental.preprocessing.CategoryEncoding(num_tokens = no_of_bins + 2)(layer_discretization)
       
       #Handle Text attributes
       feat_text = []
@@ -776,9 +816,9 @@ class TFAutoModel():
         
         #DEEP - This Dense layer connects to input layer - Numeric Data
         deep_neurons = hp.Int('deep_neurons', min_value=self.hpt_config[self._model_complexity]['deep_neurons']['min'], 
-                                              max_value=self.hpt_config[self._model_complexity]['deep_neurons']['max'],
-                              step=32)
-        x_numeric = tf.keras.layers.Dense(deep_neurons, activation='relu', kernel_initializer="he_uniform")(x_input_numeric)
+                                              max_value=self.hpt_config[self._model_complexity]['deep_neurons']['max'])
+        x_numeric = tf.keras.layers.Dense(deep_neurons, kernel_initializer='lecun_normal',
+                                activation='selu')(x_input_numeric)
         x_numeric = tf.keras.layers.BatchNormalization()(x_numeric)
 
       ####Concatenate all Categorical features( Categorical converted )
@@ -795,9 +835,9 @@ class TFAutoModel():
         
         #WIDE - This Dense layer connects to input layer - Categorical Data
         wide_neurons = hp.Int('wide_neurons', min_value=self.hpt_config[self._model_complexity]['wide_neurons']['min'], 
-                                              max_value=self.hpt_config[self._model_complexity]['wide_neurons']['max'], 
-                              step=32)
-        x_categ = tf.keras.layers.Dense(wide_neurons, activation='relu', kernel_initializer="he_uniform")(x_input_categ)
+                                              max_value=self.hpt_config[self._model_complexity]['wide_neurons']['max'])
+        x_categ = tf.keras.layers.Dense(wide_neurons, kernel_initializer='lecun_normal',
+                                activation='selu')(x_input_categ)
 
       ####Concatenate both Wide and Deep layers
       if numeric_features_count > 0 and categ_features_count > 0 and text_features_count > 0:
@@ -816,19 +856,21 @@ class TFAutoModel():
         x = x_input_text 
 
       prefinal_dense = hp.Int('prefinal_dense', min_value=self.hpt_config[self._model_complexity]['prefinal_dense']['min'], 
-                                                max_value=self.hpt_config[self._model_complexity]['prefinal_dense']['max'],
-                              step=32)
-      l1_reg = hp.Choice('l1_regularization', values=self.hpt_config[self._model_complexity]['l1_regularization'], ordered=True)
-      x = tf.keras.layers.Dense(prefinal_dense, activation='relu', kernel_initializer="he_uniform",
+                                                max_value=self.hpt_config[self._model_complexity]['prefinal_dense']['max'])
+      l1_reg = hp.Float('l1_regularization', min_value=self.hpt_config[self._model_complexity]['l1_regularization']['min'], 
+                                                max_value=self.hpt_config[self._model_complexity]['l1_regularization']['max'])
+      x = tf.keras.layers.Dense(prefinal_dense, kernel_initializer='lecun_normal',
+                                activation='selu',
                                 activity_regularizer=tf.keras.regularizers.l2(l1_reg))(x)
       x = tf.keras.layers.BatchNormalization()(x)
 
       #Final Layer
-      out = tf.keras.layers.Dense(1, activation='relu', name='out')(x)
+      out = tf.keras.layers.Dense(1, activation='linear', name='out')(x)
       model = tf.keras.Model(input_feats, out)
 
       #Set optimizer
-      hp_learning_rate = hp.Choice('learning_rate', values=self.hpt_config[self._model_complexity]['learning_rate'], ordered=True)
+      hp_learning_rate = hp.Float('learning_rate', min_value=self.hpt_config[self._model_complexity]['learning_rate']['min'], 
+                                                max_value=self.hpt_config[self._model_complexity]['learning_rate']['max'])
       opt = tf.keras.optimizers.Adam(lr = hp_learning_rate)
 
     #Compile model
@@ -854,13 +896,16 @@ class TFAutoModel():
     elif os.path.isfile(self._test_data_path):
       test_file_path = self._test_data_path
 
+    train_batch = 128
     train_dataset = self.make_input_fn(filename = train_file_path,
                         mode = tf.estimator.ModeKeys.TRAIN,
-                        batch_size = 128)()
+                        batch_size = train_batch)()
     # eval_file = '/content/tfauto/CsvExampleGen/examples/1/Split-train/*'
     # train_dataset = self.make_input_fn_gz(dir_uri = eval_file,
     #                 mode = tf.estimator.ModeKeys.TRAIN,
     #                 batch_size = 10)()
+
+    train_steps_per_epoch = int(self._config_json['len_train']) // train_batch
 
     validation_dataset = self.make_input_fn(filename = test_file_path,
                         mode = tf.estimator.ModeKeys.EVAL,
@@ -882,7 +927,7 @@ class TFAutoModel():
                       validation_data = validation_dataset,
                       epochs=epochs,
                       # validation_steps = 3,   ###Keep this none for running evaluation on full EVAL data every epoch
-                      steps_per_epoch = 100,   ###Has to be passed - Cant help it :) [ Number of batches per epoch ]
+                      steps_per_epoch = train_steps_per_epoch,   ###Has to be passed - Cant help it :) [ Number of batches per epoch ]
                       callbacks=[reduce_lr, #modelsave_callback, #tensorboard_callback, 
                                 keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True, verbose=True)],
                       class_weight = self._class_weights
@@ -892,20 +937,22 @@ class TFAutoModel():
       if self._model_type == 'REGRESSION':
         print("Hyper-Tuning a regression model...")
         mod_func = self.create_keras_model_regression
+        objective = 'val_loss'
       elif self._model_type == 'CLASSIFICATION':
         print("Hyper-Tuning a classification model...")
         mod_func = self.create_keras_model_classification
+        objective = 'val_sparse_categorical_accuracy'
 
       ###Create Tuner
       ###########################################
       tuner = kt.Hyperband(
                       mod_func,
-                      objective='val_loss',
+                      objective=objective,
                       overwrite='True',
-                      max_epochs=10)
-      stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+                      max_epochs=20)
+      stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10)
 
-      tuner.search(train_dataset, validation_data=validation_dataset, epochs=50, steps_per_epoch = 100, callbacks=[stop_early],
+      tuner.search(train_dataset, validation_data=validation_dataset, epochs=epochs, steps_per_epoch = train_steps_per_epoch, callbacks=[stop_early],
                    class_weight = self._class_weights)
       # print(f"""
       # The hyperparameter search is complete. The optimal number of units in the first densely-connected
@@ -941,7 +988,7 @@ class TFAutoModel():
 
     #Start training loop on HPT best found model
     try:
-      tf.keras.utils.plot_model(self._model, show_shapes=True, rankdir="LR")
+      tf.keras.utils.plot_model(self._model, rankdir="LR")
     except:
       1 - 1
 
@@ -1155,6 +1202,7 @@ class TFAuto():
     config_json = os.path.join(self._tfx_root, 'config.json')
     config_dict['root_path'] = self._tfx_root
     config_dict['data_schema'] = self.tfadata.features_list
+    config_dict['len_train'] = self.tfadata._len_train
     config_dict['ignore_features'] = ['ADD_FEATURES_TO_IGNORE_FROM_MODEL']
     config_dict['file_headers'] = list(self.tfadata.file_headers)
 
