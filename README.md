@@ -21,14 +21,19 @@ Built on top of the powerful **Tensorflow** ecosystem tools like **TFX** , **TF 
 ### **Features:**
 1. Build Classification / Regression models on CSV data
 2. Automated Schema Inference
-3. Automated EDA and visualization for automated feature engineering
-4. Automated Model build for mixed data types( Continuous, Categorical and Free Text )
-5. Automated Hyper-parameter tuning
-6. Automated GPU Distributed training
-7. Automated UI based What-IF analysis( Fairness, Feature Partial dependencies, What-IF )
-8. Control over complexity of model
-9. No dependency over Pandas / SKLearn
-10. Can handle dataset of any size - including multiple CSV files
+3. Automated Feature Engineering 
+    - Discretization
+    - Scaling
+    - Normalization
+    - Text Embedding
+    - Category encoding
+5. Automated Model build for mixed data types( Continuous, Categorical and Free Text )
+6. Automated Hyper-parameter tuning
+7. Automated GPU Distributed training
+8. Automated UI based What-IF analysis( Fairness, Feature Partial dependencies, What-IF )
+9. Control over complexity of model
+10. No dependency over Pandas / SKLearn
+11. Can handle dataset of any size - including multiple CSV files
 
 ### **Tutorials**:
 1. [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/rafiqhasan/auto-tensorflow/blob/main/tutorials/TFAuto_%7C_Classification.ipynb) - Auto Classification on CSV data
