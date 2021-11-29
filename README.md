@@ -6,7 +6,7 @@
 ![example workflow](https://github.com/rafiqhasan/auto-tensorflow/actions/workflows/codeql-analysis.yml/badge.svg)
 ![Open issues](https://img.shields.io/github/issues-raw/rafiqhasan/auto-tensorflow?color=red)
 
-### **Auto Tensorflow Mission:**
+### **Auto Tensorflow - Mission:**
 **Build Low Code Automated Tensorflow, What-IF explainable models in just 3 lines of code.**
 
 To make Deep Learning on Tensorflow absolutely easy for the masses with its low code framework and also increase trust on ML models through What-IF model explainability.
