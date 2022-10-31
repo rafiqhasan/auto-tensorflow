@@ -43,7 +43,9 @@ setuptools.setup(
         "tensorboard-plugin-wit==1.8.0",
         "tensorboard-data-server==0.6.1",
         "google-api-core==1.31.4",
-        "google-cloud==0.34.0"
+        "google-cloud==0.34.0",
+        "apache-beam==2.34.0",
+        "protobuf==3.19.5"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
